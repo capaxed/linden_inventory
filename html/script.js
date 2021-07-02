@@ -486,21 +486,52 @@ $(".give").droppable({
 	}
 });
 
-$(document).on("click", ".ItemBoxes", function(e){
-	if ($(this).data("location") !== undefined) {
-		e.preventDefault();
-		let Item = $(this).data("ItemData")
-		let location = $(this).data("location")
-		count = parseInt($("#item-count").val()) || 0
-		if (Item != undefined && count >= 0) {
-			$.post("https://linden_inventory/BuyFromShop", JSON.stringify({
-				data: Item,
-				location: location,
-				count: count
-			}));
-		}
-	}
+var click_delay = 300,
+    clicks = 0,
+    click_timer = null;
+$(document).on("click", ".ItemBoxes", function(e) {
+    clicks++;
+
+    let element = $(this);
+    fromInv = element.parent().data('invTier');
+
+    if (clicks === 1) {
+        click_timer = setTimeout(function() {
+            if (fromInv == 'shop' && element.data("location") !== undefined) {
+                e.preventDefault();
+                let ItemData = element.data("ItemData")
+                let location = element.data("location")
+                count = parseInt($("#item-count").val()) || 0
+                if (ItemData != undefined && count >= 0) {
+                    $.post("https://linden_inventory/BuyFromShop", JSON.stringify({
+                        data: ItemData,
+                        location: location,
+                        count: count
+                    }));
+                }
+            }
+            clicks = 0;
+        }, click_delay);
+    } else {
+        clearTimeout(click_timer);
+        let fromData = element.data("ItemData");
+        if ((fromData !== undefined) && (element.data("location") == undefined)) {
+            e.preventDefault();
+            $.post("https://linden_inventory/useItem", JSON.stringify({
+                item: fromData,
+                inv: fromInv
+            }));
+            if (fromData.close) {
+                HSN.CloseInventory()
+            }
+        }
+        clicks = 0;
+    }
 })
+
+$(document).on("dblclick", ".ItemBoxes", function(e) {
+    e.preventDefault();
+});
 
 $(".inventory-main").on("mouseenter", ".ItemBoxes", function(e){
 	e.preventDefault();
