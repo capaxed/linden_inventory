@@ -561,290 +561,206 @@ is_table_equal = function(obj1, obj2) {
 
 
 SwapItems = function(fromInventory, toInventory, fromSlot, toSlot) {
-	fromItem = fromInventory.find("[inventory-slot="+fromSlot+"]").data("ItemData");
-	inv = fromInventory.data('invTier')
-	inv2 = toInventory.data('invTier')
-	toinvId = toInventory.data('invId')
-	toinvId2 = fromInventory.data('invId')
-	toItem = toInventory.find("[inventory-slot="+toSlot+"]").data("ItemData");
-	fromSlot = Number(fromSlot)
-	toSlot = Number(toSlot)
-	let success = false
-	playerfreeweight = maxWeight - totalkg
-	rightfreeweight = rightmaxWeight - righttotalkg
-	availableweight = 0
-	//inv = from
-	//inv2 == to
-	if (fromItem.metadata == undefined) { fromItem.metadata = {} }
-	let fromimage = fromItem.name
-	if (fromItem.metadata.image != undefined) { fromimage = fromItem.metadata.image }
-	if (inv2 !== 'Playerinv') {availableweight = rightfreeweight} else {availableweight = playerfreeweight}
-	if (inv == inv2 || (availableweight !== 0 && (fromItem.weight * count) <= availableweight)) {
-		if (toItem !== undefined ) {
-			let toimage = toItem.name
-			if (toItem.metadata.image != undefined) { toimage = toItem.metadata.image }
-			if (count <= fromItem.count || count <= toItem.count) {
-				if(((fromItem.name).split("_")[0] == "WEAPON" && fromItem.metadata.durability !== undefined) && ((toItem.name).split("_")[0] == "WEAPON" && toItem.metadata.durability !== undefined)) {
-					let durability = HSN.InventoryGetDurability(fromItem.metadata.durability)
-					let durability2 = HSN.InventoryGetDurability(toItem.metadata.durability)
-					toInventory.find("[inventory-slot="+toSlot+"]").html('<div class="item-slot-img"><img src="images/'+fromimage+'.png'+'" alt="'+fromItem.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(fromItem.count, fromItem.name)+' '+weightFormat(fromItem.weight/1000 * fromItem.count)+'</p></div><div class="item-slot-label"><div class="item-slot-durability-bar"></div>'+fromItem.label+'</div>');
-					fromInventory.find("[inventory-slot="+fromSlot+"]").html('<div class="item-slot-img"><img src="images/'+toimage+'.png'+'" alt="'+toItem.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(toItem.count, toItem.name)+' '+weightFormat(toItem.weight/1000 * toItem.count)+'</p></div><div class="item-slot-label"><div class="item-slot-durability-bar"></div>'+toItem.label+'</div>');
-					toInventory.find("[inventory-slot="+toSlot+"]").find(".item-slot-durability-bar").css({"background-color":durability[0],"width":durability[1]});
-					fromInventory.find("[inventory-slot="+fromSlot+"]").find(".item-slot-durability-bar").css({"background-color":durability2[0],"width":durability2[1]});
-					toInventory.find("[inventory-slot="+toSlot+"]").data("ItemData", fromItem);
-					fromInventory.find("[inventory-slot="+fromSlot+"]").data("ItemData", toItem);
-					$.post("https://linden_inventory/saveinventorydata", JSON.stringify({
-						type: "swap",
-						toSlot: toSlot,
-						frominv: inv,
-						toinv: inv2,
-						toItem: fromItem,
-						fromSlot: fromSlot,
-						fromItem: toItem,
-						invid: toinvId,
-						invid2 :toinvId2
-					}));
-					success = true
-				} else if (count == fromItem.count && fromItem.name == toItem.name && toItem.stack && is_table_equal(toItem.metadata, fromItem.metadata)) { // stack
-					let toCount = Number(toItem.count)
-					let newcount = (Number(count)+toCount)
-					let newDataItem = {}
-					newDataItem.name = toItem.name
-					newDataItem.label = toItem.label
-					newDataItem.count = Number(newcount)
-					newDataItem.metadata = toItem.metadata
-					newDataItem.stack = toItem.stack
-					newDataItem.description = toItem.description
-					newDataItem.weight = toItem.weight
-					newDataItem.price = toItem.price
-					toInventory.find("[inventory-slot="+toSlot+"]").html('<div class="item-slot-img"><img src="images/'+toimage+'.png'+'" alt="'+toItem.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(newcount, toItem.name)+' '+weightFormat(toItem.weight/1000 * newcount)+'</p></div><p><div class="item-slot-label">'+toItem.label+'</div>');
-					toInventory.find("[inventory-slot="+toSlot+"]").data("ItemData", newDataItem);
-					$.post("https://linden_inventory/saveinventorydata", JSON.stringify({
-						type: "freeslot",
-						frominv: inv,
-						toinv: inv2,
-						emptyslot: fromSlot,
-						toSlot: toSlot,
-						item: newDataItem,
-						invid: toinvId,
-						invid2 :toinvId2
-					}));
-					success = true
-					HSN.RemoveItemFromSlot(fromInventory, fromSlot)
-				} else if (fromItem.name !== toItem.name && inv2 == inv) { // swap
-					if ((toItem.name).split("_")[0] == "WEAPON" && toItem.metadata.durability !== undefined) {
-						let durability = HSN.InventoryGetDurability(toItem.metadata.durability)
-						fromInventory.find("[inventory-slot="+fromSlot+"]").html('<div class="item-slot-img"><img src="images/'+toimage+'.png'+'" alt="'+toItem.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(toItem.count, toItem.name)+' '+weightFormat(toItem.weight/1000 * toItem.count)+'</p></div><div class="item-slot-label"><div class="item-slot-durability-bar"></div>'+toItem.label+'</div>');
-						fromInventory.find("[inventory-slot="+fromSlot+"]").find(".item-slot-durability-bar").css({"background-color":durability[0],"width":durability[1]});
-						toInventory.find("[inventory-slot="+toSlot+"]").html('<div class="item-slot-img"><img src="images/'+fromimage+'.png'+'" alt="'+fromItem.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(fromItem.count, fromItem.name)+' '+weightFormat(fromItem.weight/1000 * fromItem.count)+'</p></div><p><div class="item-slot-label">'+fromItem.label+'</div>');
-						toInventory.find("[inventory-slot="+toSlot+"]").data("ItemData", fromItem);
-						fromInventory.find("[inventory-slot="+fromSlot+"]").data("ItemData", toItem);
-						$.post("https://linden_inventory/saveinventorydata", JSON.stringify({
-							type: "swap",
-							toSlot: toSlot,
-							frominv: inv,
-							toinv: inv2,
-							toItem: fromItem,
-							fromSlot: fromSlot,
-							fromItem: toItem,
-							invid: toinvId,
-							invid2 :toinvId2
-						}));
-						success = true
-					} else if ((fromItem.name).split("_")[0] == "WEAPON" && fromItem.metadata.durability !== undefined) {
-						let durability = HSN.InventoryGetDurability(fromItem.metadata.durability)
-						toInventory.find("[inventory-slot="+toSlot+"]").html('<div class="item-slot-img"><img src="images/'+fromimage+'.png'+'" alt="'+fromItem.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(fromItem.count, fromItem.name)+' '+weightFormat(fromItem.weight/1000 * fromItem.count)+'</p></div><div class="item-slot-label"><div class="item-slot-durability-bar"></div>'+fromItem.label+'</div>');
-						toInventory.find("[inventory-slot="+toSlot+"]").find(".item-slot-durability-bar").css({"background-color":durability[0],"width":durability[1]});
-						fromInventory.find("[inventory-slot="+fromSlot+"]").html('<div class="item-slot-img"><img src="images/'+toimage+'.png'+'" alt="'+toItem.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(toItem.count, toItem.name)+' '+weightFormat(toItem.weight/1000 * toItem.count)+'</p></div><p><div class="item-slot-label">'+toItem.label+'</div>');
-						fromInventory.find("[inventory-slot="+fromSlot+"]").data("ItemData", toItem);
-						toInventory.find("[inventory-slot="+toSlot+"]").data("ItemData", fromItem);
-						$.post("https://linden_inventory/saveinventorydata", JSON.stringify({
-							type: "swap",
-							toSlot: toSlot,
-							frominv: inv,
-							toinv: inv2,
-							toItem: fromItem,
-							fromSlot: fromSlot,
-							fromItem: toItem,
-							invid: toinvId,
-							invid2 :toinvId2
-						}));
-						success = true
-					} else if (inv2 == inv) {
-						fromInventory.find("[inventory-slot="+fromSlot+"]").html('<div class="item-slot-img"><img src="images/'+toimage+'.png'+'" alt="'+toItem.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(toItem.count)+' '+weightFormat(toItem.weight/1000 * toItem.count)+'</p></div><p><div class="item-slot-label">'+toItem.label+'</div>');
-						toInventory.find("[inventory-slot="+toSlot+"]").html('<div class="item-slot-img"><img src="images/'+fromimage+'.png'+'" alt="'+fromItem.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(fromItem.count)+' '+weightFormat(fromItem.weight/1000 * fromItem.count)+'</p></div><p><div class="item-slot-label">'+fromItem.label+'</div>');
-						fromInventory.find("[inventory-slot="+fromSlot+"]").data("ItemData", toItem);
-						toInventory.find("[inventory-slot="+toSlot+"]").data("ItemData", fromItem);
-						$.post("https://linden_inventory/saveinventorydata", JSON.stringify({
-							type: "swap",
-							toSlot: toSlot,
-							frominv: inv,
-							toinv: inv2,
-							toItem: fromItem,
-							fromSlot: fromSlot,
-							fromItem: toItem,
-							invid: toinvId,
-							invid2 :toinvId2
-						}));
-						success = true
-					}
-				}	 
-			}
-		} else {
-			if (count <= fromItem.count) {
-				if(((fromItem.name).split("_")[0] == "WEAPON" && fromItem.metadata.durability !== undefined)) {
-					let durability = HSN.InventoryGetDurability(fromItem.metadata.durability)
-					toInventory.find("[inventory-slot="+toSlot+"]").html('<div class="item-slot-img"><img src="images/'+fromimage+'.png'+'" alt="'+fromItem.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(fromItem.count, fromItem.name)+' '+weightFormat(fromItem.weight/1000 * fromItem.count)+'</p></div><div class="item-slot-label"><div class="item-slot-durability-bar"></div>'+fromItem.label+'</div>');
-					toInventory.find("[inventory-slot="+toSlot+"]").find(".item-slot-durability-bar").css({"background-color":durability[0],"width":durability[1]});
-					toInventory.find("[inventory-slot="+toSlot+"]").data("ItemData", fromItem);
-					HSN.RemoveItemFromSlot(fromInventory,fromSlot)
-					$.post("https://linden_inventory/saveinventorydata", JSON.stringify({
-						type: "freeslot",
-						frominv: inv,
-						toinv: inv2,
-						emptyslot: fromSlot,
-						toSlot: toSlot,
-						item: fromItem,
-						invid: toinvId,
-						invid2 :toinvId2
-					}));
-					success = true
-				} else {
-					if (fromItem.count > count) {
-						let oldslotCount = fromItem.count - count
-						oldItemData = {}
-						newItemData = {}
-						oldItemData.count = Number(oldslotCount)
-						oldItemData.name = fromItem.name
-						oldItemData.label = fromItem.label
-						oldItemData.stack = fromItem.stack
-						oldItemData.description = fromItem.description
-						oldItemData.metadata = fromItem.metadata
-						oldItemData.weight = fromItem.weight
-						oldItemData.slot = fromSlot
-						oldItemData.price = fromItem.price
-						newItemData.count = Number(count)
-						newItemData.label = fromItem.label
-						newItemData.name = fromItem.name
-						newItemData.stack = fromItem.stack
-						newItemData.description = fromItem.description
-						newItemData.metadata = fromItem.metadata
-						newItemData.weight = fromItem.weight
-						newItemData.slot = toSlot
-						newItemData.price = fromItem.price
-						oldItemData.metadata.image || oldItemData.name
-						oldImage = fromimage
-						newImage = fromimage
-						fromInventory.find("[inventory-slot="+fromSlot+"]").html('<div class="item-slot-img"><img src="images/'+oldImage+'.png'+'" alt="'+oldItemData.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(oldItemData.count, oldItemData.name)+' '+weightFormat(oldItemData.weight/1000 * oldItemData.count)+'</p></div><div class="item-slot-label">'+oldItemData.label+'</div>');
-						fromInventory.find("[inventory-slot="+fromSlot+"]").data("ItemData", oldItemData);
-						toInventory.find("[inventory-slot="+toSlot+"]").html('<div class="item-slot-img"><img src="images/'+newImage+'.png'+'" alt="'+newItemData.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(newItemData.count, newItemData.name)+' '+weightFormat(newItemData.weight/1000 * newItemData.count)+'</p></div><div class="item-slot-label">'+newItemData.label+'</div>');
-						toInventory.find("[inventory-slot="+toSlot+"]").data("ItemData", newItemData);
-						$.post("https://linden_inventory/saveinventorydata", JSON.stringify({
-							type: "split",
-							frominv: inv,
-							toinv: inv2,
-							toSlot: toSlot,
-							fromSlot: fromSlot,
-							oldslotItem: oldItemData,
-							newslotItem: newItemData,
-							invid: toinvId,
-							invid2 :toinvId2
-						}));
-						success = true
-					} else if (fromItem.count == count) {
-						HSN.RemoveItemFromSlot(fromInventory,fromSlot)
-						toInventory.find("[inventory-slot="+toSlot+"]").html('<div class="item-slot-img"><img src="images/'+fromimage+'.png'+'" alt="'+fromItem.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(count, fromItem.name)+' '+weightFormat(fromItem.weight/1000 * count)+'</p></div><p><div class="item-slot-label">'+fromItem.label+'</div>');
-						toInventory.find("[inventory-slot="+toSlot+"]").data("ItemData", fromItem);
-						$.post("https://linden_inventory/saveinventorydata", JSON.stringify({
-							type: "freeslot",
-							frominv: inv,
-							toinv: inv2,
-							emptyslot: fromSlot,
-							toSlot: toSlot,
-							item: fromItem,
-							invid: toinvId,
-							invid2 :toinvId2
-							
-						}));
-						success = true
-					}
-				}
-			}
-		}
-		if (success) {
-			if (inv2 !== 'Playerinv') {
-				if (inv2 !== inv) {
-					righttotalkg = righttotalkg+(fromItem.weight * count)
-					if (rightinvtype == 'drop') { if (righttotalkg == 0) { $(".progressRightLabel").hide() } else { $(".progressRightLabel").show() }}
-					$(".progressRightLabel").html(weightFormat(righttotalkg/1000, false, true)+'/'+weightFormat(rightmaxWeight/1000, false))
-					$( function() {
-						$( "#progressbarRight" ).progressbar()
-						let progressbar = $( "#progressbarRight" )
-						let progressbarValue = progressbar.find( ".ui-progressbar-value" )
-						let value = righttotalkg/rightmaxWeight
-						let color = colorMixer([190,35,35], [35,190,35], value)
-						progressbarValue.css({"background": color, "width": (value*100) +"%"})
-					});
-					if (rightinvtype !== 'bag') {
-						totalkg = totalkg - (fromItem.weight * count)
-						$(".progressLeftLabel").html(weightFormat(totalkg/1000, false, true)+'/'+weightFormat(maxWeight/1000, false))
-						$( function() {
-							$( "#progressbarLeft" ).progressbar()
-							let progressbar = $( "#progressbarLeft" )
-							let progressbarValue = progressbar.find( ".ui-progressbar-value" )
-							let value = totalkg/maxWeight
-							let color = colorMixer([190,35,35], [35,190,35], value)
-							progressbarValue.css({"background": color, "width": (value*100) +"%"})
-						});
-					} else {
-						item = fromInventory.find("[inventory-slot="+rightinvslot+"]").data("ItemData");
-						item.weight = item.weight+(fromItem.weight * count)
-						let image = item.name
-						if (item.metadata.image != undefined) { image = item.metadata.image }
-						$(".inventory-main-leftside").find("[inventory-slot="+item.slot+"]").html('<div class="item-slot-img"><img src="images/'+image+'.png'+'" alt="'+item.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(item.count, item.name)+' '+weightFormat(item.weight/1000 * item.count)+'</p></div><div class="item-slot-label">'+item.label+'</div></div>');
-					}
-				}
-			} else {
-				if (inv2 !== inv) {
-					righttotalkg = righttotalkg - (fromItem.weight * count)
-					if (rightinvtype == 'drop') { if (righttotalkg == 0) { $(".progressRightLabel").hide() } else { $(".progressRightLabel").show() }}
-					$(".progressRightLabel").html(weightFormat(righttotalkg/1000, false, true)+'/'+weightFormat(rightmaxWeight/1000, false))
-					$( function() {
-						$( "#progressbarRight" ).progressbar()
-						let progressbar = $( "#progressbarRight" )
-						let progressbarValue = progressbar.find( ".ui-progressbar-value" )
-						let value = righttotalkg/rightmaxWeight
-						let color = colorMixer([190,35,35], [35,190,35], value)
-						progressbarValue.css({"background": color, "width": (value*100) +"%"})
-					});
-					if (rightinvtype !== 'bag') {
-						totalkg = totalkg+(fromItem.weight * count)
-						$(".progressLeftLabel").html(weightFormat(totalkg/1000, false, true)+'/'+weightFormat(maxWeight/1000, false))
-						$( function() {
-							$( "#progressbarLeft" ).progressbar()
-							let progressbar = $( "#progressbarLeft" )
-							let progressbarValue = progressbar.find( ".ui-progressbar-value" )
-							let value = totalkg/maxWeight
-							let color = colorMixer([190,35,35], [35,190,35], value)
-							progressbarValue.css({"background": color, "width": (value*100) +"%"})
-						});
-					} else {
-						item = toInventory.find("[inventory-slot="+rightinvslot+"]").data("ItemData");
-						item.weight = item.weight - (fromItem.weight * count)
-						let image = item.name
-						if (item.metadata.image != undefined) { image = item.metadata.image }
-						$(".inventory-main-leftside").find("[inventory-slot="+item.slot+"]").html('<div class="item-slot-img"><img src="images/'+image+'.png'+'" alt="'+item.name+'" /></div><div class="item-slot-count"><p>'+numberFormat(item.count, item.name)+' '+weightFormat(item.weight/1000 * item.count)+'</p></div><div class="item-slot-label">'+item.label+'</div></div>');
-					}
-				}
-			}
+    let primaryInventory = fromInventory.data('invTier')
+    let secondaryInventory = toInventory.data('invTier')
 
-		} else {
-			HSN.InventoryMessage('cannot_perform', 2)
-		}
-	} else {
-		if (inv2 == 'Playerinv') { HSN.InventoryMessage('cannot_carry', 2) } else { HSN.InventoryMessage('cannot_carry_other', 2) }
-	}
-	DragAndDrop()
+    let primaryInventoryId = fromInventory.data('invId')
+    let secondaryInventoryId = toInventory.data('invId')
+
+    let fromItem = fromInventory.find("[inventory-slot=" + fromSlot + "]").data("ItemData");
+    let toItem = toInventory.find("[inventory-slot=" + toSlot + "]").data("ItemData");
+
+    fromSlot = Number(fromSlot)
+    toSlot = Number(toSlot)
+
+    playerfreeweight = maxWeight - totalkg
+    rightfreeweight = rightmaxWeight - righttotalkg
+    availableweight = 0
+
+    fromItem.metadata = fromItem.metadata == undefined ? {} : fromItem.metadata;
+    let fromimage = fromItem.metadata.image == undefined ? fromItem.name : fromItem.metadata.image;
+
+    if (secondaryInventory !== 'Playerinv') {
+        availableweight = rightfreeweight;
+    } else {
+        availableweight = playerfreeweight;
+    }
+
+    if (availableweight !== 0 && (fromItem.weight * count) <= availableweight) {
+        if (count <= fromItem.count || (toItem !== undefined && count <= toItem.count)) {
+            let postData = {
+                type: "swap",
+                frominv: primaryInventory,
+                toinv: secondaryInventory,
+                toSlot: toSlot,
+                invid: secondaryInventoryId,
+                invid2: primaryInventoryId
+            };
+
+            toInventory.find(`[inventory-slot=${toSlot}]`).html(
+                `<div class="item-slot-img">
+                    <img src="images/${fromimage}.png" alt="${fromItem.name}" />
+                </div>
+                <div class="item-slot-count">
+                    <p>x${numberFormat(fromItem.count, fromItem.name)}</p>
+                </div>
+                <div class="item-slot-label">
+                    <div class="item-slot-durability-bar"></div>
+                    <span class="item-label">${fromItem.label}</span>
+                </div>`
+            );
+            toInventory.find(`[inventory-slot=${toSlot}]`).data("ItemData", fromItem);
+
+            let updateFromItem = function(item) {
+                let image = item.metadata.image == undefined ? item.name : item.metadata.image;
+                fromInventory.find(`[inventory-slot=${fromSlot}]`).html(
+                    `<div class="item-slot-img">
+                        <img src="images/${image}.png" alt="${item.name}" />
+                    </div>
+                    <div class="item-slot-count">
+                        <p>x${numberFormat(item.count, item.name)}</p>
+                    </div>
+                    <div class="item-slot-label">
+                        <div class="item-slot-durability-bar"></div>
+                        <span class="item-label">${item.label}</span>
+                    </div>`
+                );
+                fromInventory.find(`[inventory-slot=${fromSlot}]`).data("ItemData", item);
+            }
+            
+            if (toItem !== undefined) {
+                toItem.metadata = toItem.metadata == undefined ? {} : toItem.metadata;
+                toimage = toItem.metadata.image == undefined ? toItem.name : toItem.metadata.image;
+
+                updateFromItem(toItem);
+
+                if (fromItem.name.split("_")[0] == "WEAPON" && fromItem.metadata.durability !== undefined) {
+                    let durability = HSN.InventoryGetDurability(fromItem.metadata.durability);
+                    toInventory.find("[inventory-slot=" + toSlot + "]").find(".item-slot-durability-bar").css({
+                        "display": "block",
+                        "background-color": durability[0],
+                        "width": durability[1] + '%'
+                    });
+                }
+
+                if (toItem.name.split("_")[0] == "WEAPON" && toItem.metadata.durability !== undefined) {
+                    let durability = HSN.InventoryGetDurability(toItem.metadata.durability);
+                    fromInventory.find("[inventory-slot=" + fromSlot + "]").find(".item-slot-durability-bar").css({
+                        "display": "block",
+                        "background-color": durability[0],
+                        "width": durability[1] + '%'
+                    });
+                }
+
+                if (fromItem.name == toItem.name) {
+                    if (toItem.stack && is_table_equal(toItem.metadata, fromItem.metadata)) {
+                        toItem.count = toItem.count + count;
+                        toInventory.find(`[inventory-slot=${toSlot}]`).find(".item-slot-count").html(`<p>x${numberFormat(toItem.count, toItem.name)}</p>`);
+                        toInventory.find(`[inventory-slot=${toSlot}]`).data("ItemData", toItem);
+
+                        if (count < fromItem.count) {
+                            fromItem.count = fromItem.count - count;
+                            fromInventory.find(`[inventory-slot=${fromSlot}]`).find(".item-slot-count").html(`<p>x${numberFormat(fromItem.count, fromItem.name)}</p>`);
+                            toInventory.find(`[inventory-slot=${fromSlot}]`).data("ItemData", fromItem);
+                        } else {
+                            postData.type = "freeslot";
+                            postData.item = toItem;
+                        }
+                    }
+                }
+
+                postData.fromSlot = fromSlot;
+                postData.fromItem = toItem;
+                postData.toItem = fromItem;
+            } else {
+                if (count == fromItem.count) {
+                    toInventory.find(`[inventory-slot=${toSlot}]`).find(".item-slot-count").html(`<p>x${numberFormat(count, fromItem.name)}</p>`);
+                    toInventory.find(`[inventory-slot=${toSlot}]`).data("ItemData", fromItem);
+                    postData.type = "freeslot";
+                    postData.item = fromItem;
+                } else {
+                    let oldItem = JSON.parse(JSON.stringify(fromItem));
+                    oldItem.count = fromItem.count - count;
+                    oldItem.slot = fromSlot;
+                    updateFromItem(oldItem);
+
+                    let newItem = JSON.parse(JSON.stringify(fromItem));
+                    newItem.count = count;
+                    newItem.slot = toSlot;
+                    toInventory.find(`[inventory-slot=${toSlot}]`).find(".item-slot-count").html(`<p>x${numberFormat(newItem.count, newItem.name)}</p>`);
+                    toInventory.find(`[inventory-slot=${toSlot}]`).data("ItemData", newItem);
+
+                    postData.type = "split";
+                    postData.fromSlot = fromSlot;
+                    postData.oldslotItem = oldItem;
+                    postData.newslotItem = newItem;
+                }
+            }
+
+            if (postData.type == "freeslot") {
+                postData.emptyslot = fromSlot;
+                ["fromSlot", "fromItem", "toItem"].forEach(key => { delete postData[key]; });
+                HSN.RemoveItemFromSlot(fromInventory, fromSlot);
+            }
+
+            $.post("https://linden_inventory/saveinventorydata", JSON.stringify(postData));
+
+            if (secondaryInventory !== primaryInventory) {
+                righttotalkg = righttotalkg + ((secondaryInventory !== 'Playerinv' ? -1 : 1) * fromItem.weight * count);
+
+                if (rightinvtype == 'drop' && righttotalkg == 0) {
+                    $(".progressRightLabel").hide();
+                } else {
+                    $(".progressRightLabel").show();
+                }
+
+                $(".progressRightLabel").html(weightFormat(righttotalkg / 1000, false, true) + '/' + weightFormat(rightmaxWeight / 1000, false));
+                $(function() {
+                    $("#progressbarRight").progressbar();
+                    let progressbar = $("#progressbarRight");
+                    let progressbarValue = progressbar.find(".ui-progressbar-value");
+                    let value = righttotalkg / rightmaxWeight;
+                    let color = colorMixer([190, 35, 35], [35, 190, 35], value);
+                    progressbarValue.css({ "background": color, "width": (value * 100) + "%" });
+                });
+                
+                if (rightinvtype == 'bag') {
+                    item = fromInventory.find("[inventory-slot=" + rightinvslot + "]").data("ItemData");
+                    item.weight = item.weight + ((secondaryInventory !== 'Playerinv' ? -1 : 1) * fromItem.weight * count);
+
+                    let image = item.metadata.image != undefined ? item.metadata.image : item.name;
+                    $(".inventory-main-leftside").find("[inventory-slot=" + item.slot + "]").html(
+                        `<div class="item-slot-img">
+                            <img src="images/${image}.png" alt="${item.name}" />
+                        </div>
+                        <div class="item-slot-count">
+                            <p>x${numberFormat(item.count, item.name)}</p>
+                        </div>
+                        <div class="item-slot-label">
+                            <span class="item-label">${item.label}</span>
+                        </div>`
+                    );
+                } else {
+                    totalkg = totalkg - ((secondaryInventory !== 'Playerinv' ? -1 : 1) * fromItem.weight * count);
+
+                    $(".progressLeftLabel").html(weightFormat(totalkg / 1000, false, true) + '/' + weightFormat(maxWeight / 1000, false));
+                    $(function() {
+                        $("#progressbarLeft").progressbar()
+                        let progressbar = $("#progressbarLeft")
+                        let progressbarValue = progressbar.find(".ui-progressbar-value")
+                        let value = totalkg / maxWeight
+                        let color = colorMixer([190, 35, 35], [35, 190, 35], value)
+                        progressbarValue.css({ "background": color, "width": (value * 100) + "%" })
+                    });
+                }
+            }
+        } else {
+            HSN.InventoryMessage('cannot_perform', 2)
+        }
+    } else {
+        HSN.InventoryMessage(secondaryInventory == 'Playerinv' ? 'cannot_carry' : 'cannot_carry_other', 2);
+    }
+    DragAndDrop()
 }
 
 var canScroll = true
