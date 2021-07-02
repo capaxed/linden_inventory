@@ -372,6 +372,7 @@ AddEventHandler('linden_inventory:openInventory',function(data, rightinventory)
 			weight = data.weight,
 			rightinventory = rightinventory,
 			job = ESX.PlayerData.job,
+			useTooltip = Config.useTooltip,
 		})
 		ESX.PlayerData.inventory = data.inventory
 		if not rightinventory then movement = true else movement = false end

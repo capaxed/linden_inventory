@@ -17,6 +17,8 @@ let playerfreeweight = 0
 let rightfreeweight = 0
 let availableweight = 0
 let job = []
+let useTooltip = false;
+let mouseOnItemBox = false;
 
 let weightFormat = function(num, parenthesis, showZero) {
 	if (parenthesis == false) {
@@ -537,6 +539,9 @@ $(".inventory-main").on("mouseenter", ".ItemBoxes", function(e){
 	e.preventDefault();
 	let Item = $(this).data("ItemData")
 	if (e.type == 'mouseenter' && Item != undefined) {
+        $(".iteminfo").css({ opacity: 100 });
+        mouseOnItemBox = true;
+
 		$(".iteminfo").fadeIn(100);
 		$(".iteminfo-label").html('<p>'+Item.label+' <span style="float:right;">'+gram.format(Item.weight)+'</span></p><hr class="line">')
 		$(".iteminfo-description").html('')
@@ -556,6 +561,33 @@ $(".inventory-main").on("mouseenter", ".ItemBoxes", function(e){
 		$(".iteminfo").fadeOut(100);
 	}
 });
+
+$(".inventory-main").on("mouseleave", ".ItemBoxes", function(e) {
+    $(".iteminfo").css({ opacity: 0 });
+    mouseOnItemBox = false;
+});
+
+window.onmousemove = function(e) {
+    if (useTooltip && mouseOnItemBox) {
+        if ((e.clientY + 40 + $(".iteminfo").height()) > window.innerHeight) {
+            $(".iteminfo").css({
+                top: String(e.clientY - 40 - $(".iteminfo").height()) + "px",
+                left: String(e.clientX - ($(".iteminfo").width() / 2)) + "px",
+                right: "unset",
+                bottom: "unset",
+                transform: "unset"
+            });
+        } else {
+            $(".iteminfo").css({
+                top: String(e.clientY + 40) + "px",
+                left: String(e.clientX - ($(".iteminfo").width() / 2)) + "px",
+                right: "unset",
+                bottom: "unset",
+                transform: "unset"
+            });
+        }
+    }
+};
 
 HSN.CloseInventory = function() {
 	$.post('https://linden_inventory/exit', JSON.stringify({

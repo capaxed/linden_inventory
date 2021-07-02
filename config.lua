@@ -16,6 +16,9 @@ Config.PlayerSlots = 50
 -- If vehicle plates are stored with a trailing space, set to false (i.e. `XXX-000 `)
 Config.TrimPlate = true
 
+-- Use Mouse Tooltip for Items Info
+Config.Tooltip = false
+
 -- Blur the screen while in an inventory
 Config.EnableBlur = true
 
